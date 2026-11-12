@@ -1,0 +1,1149 @@
+ <!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ghost Buster: Alam Urutan Nombor </title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@500;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            margin: 0;
+            padding: 0;
+        }
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Quicksand', sans-serif;
+            background: #0d0814;
+            color: #fff;
+        }
+
+        #bg-canvas, #game-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        #bg-canvas { z-index: 1; }
+        #game-canvas { z-index: 5; cursor: crosshair; }
+
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: opacity 0.4s ease;
+        }
+
+        .hidden {
+            display: none !important;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .card {
+            background: rgba(25, 18, 41, 0.92);
+            border: 3px solid #00ffcc;
+            box-shadow: 0 0 25px rgba(0, 255, 204, 0.4), inset 0 0 15px rgba(0, 255, 204, 0.2);
+            border-radius: 24px;
+            padding: 28px 36px;
+            max-width: 580px;
+            width: 92%;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            animation: floatCard 4s ease-in-out infinite;
+            max-height: 95vh;
+            overflow-y: auto;
+        }
+
+        @keyframes floatCard {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .banner-container {
+            width: 100%;
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 18px;
+            border: 3px solid #ff00ff;
+            box-shadow: 0 0 18px rgba(255, 0, 255, 0.6);
+            background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+        }
+
+        .banner-img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 12px;
+        }
+
+        h1 {
+            font-family: 'Fredoka One', cursive;
+            font-size: 2.2rem;
+            color: #00ffcc;
+            text-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+
+        p.desc {
+            font-size: 0.92rem;
+            color: #d1c4e9;
+            margin-bottom: 20px;
+            line-height: 1.55;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: 800;
+            font-size: 0.9rem;
+            color: #ff00ff;
+            margin-bottom: 6px;
+            text-shadow: 0 0 5px rgba(255, 0, 255, 0.5);
+            text-transform: uppercase;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 2px solid #5c3d99;
+            background: rgba(15, 10, 26, 0.8);
+            color: #fff;
+            font-size: 1rem;
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 700;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .input-group input:focus {
+            border-color: #00ffcc;
+            box-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
+        }
+
+        .btn-start {
+            margin-top: 8px;
+            width: 100%;
+            padding: 14px;
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.3rem;
+            color: #0d0814;
+            background: linear-gradient(45deg, #00ffcc, #ff00ff);
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.6);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-start:hover {
+            transform: scale(1.03);
+            box-shadow: 0 0 25px rgba(255, 0, 255, 0.8);
+        }
+
+        #hud {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            right: 20px;
+            z-index: 20;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: none;
+        }
+
+        .hud-card {
+            background: rgba(20, 12, 38, 0.85);
+            border: 2px solid #00ffcc;
+            border-radius: 14px;
+            padding: 8px 16px;
+            font-family: 'Fredoka One', cursive;
+            font-size: 1rem;
+            color: #fff;
+            box-shadow: 0 0 10px rgba(0, 255, 204, 0.3);
+            backdrop-filter: blur(5px);
+        }
+
+        .hud-val {
+            color: #ff00ff;
+            margin-left: 5px;
+        }
+
+        .hud-ammo {
+            border-color: #ffeb3b;
+            box-shadow: 0 0 10px rgba(255, 235, 59, 0.3);
+        }
+
+        .hud-ammo .hud-val {
+            color: #ffeb3b;
+        }
+
+        #modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 5, 20, 0.85);
+            z-index: 30;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(8px);
+        }
+
+        .q-card {
+            background: #180e2b;
+            border: 3px solid #ff00ff;
+            box-shadow: 0 0 30px rgba(255, 0, 255, 0.5);
+            border-radius: 24px;
+            padding: 25px 30px;
+            max-width: 550px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+        }
+
+        .ghost-img-container {
+            width: 110px;
+            height: 110px;
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            filter: drop-shadow(0 0 15px currentColor);
+            animation: ghostFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes ghostFloat {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-8px) scale(1.05); }
+        }
+
+        .ghost-img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .q-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .q-title {
+            font-family: 'Fredoka One', cursive;
+            color: #00ffcc;
+            font-size: 1.2rem;
+            margin-bottom: 12px;
+        }
+
+        .q-sequence {
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.6rem;
+            color: #ffff00;
+            background: rgba(0,0,0,0.6);
+            padding: 14px;
+            border-radius: 14px;
+            margin-bottom: 12px;
+            letter-spacing: 1px;
+            border: 2px dashed #ffff00;
+            word-break: break-word;
+        }
+
+        .hint-container {
+            margin-bottom: 16px;
+        }
+
+        .btn-hint {
+            background: rgba(255, 235, 59, 0.15);
+            border: 2px solid #ffeb3b;
+            color: #ffeb3b;
+            font-family: 'Fredoka One', cursive;
+            font-size: 0.95rem;
+            padding: 8px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-hint:hover:not(:disabled) {
+            background: #ffeb3b;
+            color: #000;
+            box-shadow: 0 0 12px rgba(255, 235, 59, 0.6);
+        }
+
+        .btn-hint:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .hint-box {
+            margin-top: 8px;
+            background: rgba(255, 235, 59, 0.1);
+            border: 1px dashed #ffeb3b;
+            color: #fffde7;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .q-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .btn-opt {
+            border: 2px solid;
+            color: #fff;
+            padding: 14px 12px;
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.25rem;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .btn-opt:hover:not(:disabled) {
+            transform: translateY(-3px) scale(1.02);
+            filter: brightness(1.2);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+        }
+
+        .opt-badge {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: 900;
+            flex-shrink: 0;
+        }
+
+        #feedback-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 50;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(13, 8, 20, 0.6);
+            backdrop-filter: blur(4px);
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            10%, 30%, 50%, 70%, 90% { transform: translate(-8px, 4px) rotate(-2deg); }
+            20%, 40%, 60%, 80% { transform: translate(8px, -4px) rotate(2deg); }
+        }
+        .animate-shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.4); opacity: 0; }
+            70% { transform: scale(1.15); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop {
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .cert-card {
+            background: #fff;
+            color: #111;
+            border: 8px double #c5a059;
+            border-radius: 20px;
+            padding: 30px 28px;
+            max-width: 650px;
+            width: 95%;
+            text-align: center;
+            box-shadow: 0 0 40px rgba(255, 215, 0, 0.4);
+            position: relative;
+            max-height: 95vh;
+            overflow-y: auto;
+        }
+
+        .cert-card h2 {
+            font-family: 'Fredoka One', cursive;
+            font-size: 2.1rem;
+            color: #b38728;
+            margin-bottom: 5px;
+        }
+
+        .cert-card h3 {
+            font-size: 1.05rem;
+            color: #555;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 800;
+        }
+
+        .cert-name {
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.9rem;
+            color: #1a237e;
+            border-bottom: 2px solid #b38728;
+            display: inline-block;
+            padding: 0 20px 5px;
+            margin: 8px 0 5px;
+        }
+
+        .cert-class {
+            font-size: 1.05rem;
+            color: #444;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .cert-score {
+            font-size: 1.5rem;
+            color: #2e7d32;
+            font-weight: 900;
+            margin-bottom: 8px;
+        }
+
+        .penalty-text {
+            font-size: 0.95rem;
+            color: #d32f2f;
+            font-weight: 700;
+            margin-bottom: 18px;
+            line-height: 1.4;
+        }
+
+        .btn-restart {
+            background: #333;
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.1rem;
+            border-radius: 12px;
+            cursor: pointer;
+        }
+
+        .btn-sync {
+            width: 100%;
+            background: linear-gradient(45deg, #00c853, #00b0ff);
+            color: #fff;
+            border: none;
+            padding: 14px;
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.15rem;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 200, 83, 0.4);
+            margin-top: 10px;
+            transition: transform 0.2s;
+        }
+
+        .btn-sync:hover:not(:disabled) {
+            transform: scale(1.02);
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="bg-canvas"></canvas>
+    <canvas id="game-canvas"></canvas>
+
+    <!-- 1. MULA PERMAINAN -->
+    <div id="welcome-screen" class="screen">
+        <div class="card">
+            <div class="banner-container">
+                <img src="mm.jpg" alt="Matematik Bersama Cikgu Wi" class="banner-img" onerror="this.onerror=null; this.src='https://placehold.co/1000x300/ffcc80/3e2723?text=Matematik+Bersama+Cikgu+Wi';">
+            </div>
+
+            <h1>GHOST BUSTER</h1>
+            <p class="desc">Selamat datang ke <b>Alam Urutan Nombor  </b>!<br>
+            🎯 <b>Sistem Markah mengikut Aras Soalan:</b><br>
+            🟢 Senang: <b>5 Markah</b> | 🟣 Sederhana: <b>10 Markah</b> | 🔵 Tinggi: <b>20 Markah</b><br>
+            🔫 <b>Had Tembakan:</b> Hanya <b><span id="welcome-ammo-count">23</span> tembakan</b> dibenarkan!<br>
+            <i>⚠️ Amaran: Menggunakan petunjuk menolak <b>1 mata</b> &amp; setiap baki hantu di akhir permainan akan menolak <b>1 mata</b>!</i></p>
+
+            <form id="start-form" onsubmit="startGame(event)">
+                <div class="input-group">
+                    <label for="p-name">NAMA MURID:</label>
+                    <input type="text" id="p-name" placeholder="Masukkan nama penuh" required autocomplete="off">
+                </div>
+                <div class="input-group">
+                    <label for="p-class">KELAS:</label>
+                    <input type="text" id="p-class" placeholder="Contoh: 3 Cemerlang" required autocomplete="off">
+                </div>
+                <button type="submit" class="btn-start">MULA PEMBURUAN 🚀</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. HUD -->
+    <div id="hud" class="hidden">
+        <div class="hud-card hud-ammo">🔫 Baki Tembakan: <span id="hud-ammo" class="hud-val">23 / 23</span></div>
+        <div class="hud-card">👻 Baki Hantu: <span id="hud-level" class="hud-val">0</span></div>
+        <div class="hud-card">👤 Murid: <span id="hud-name" class="hud-val">-</span></div>
+        <div class="hud-card">⭐ Mata: <span id="hud-score" class="hud-val">0</span></div>
+    </div>
+
+    <!-- 3. MODAL SOALAN INTERAKTIF -->
+    <div id="modal-overlay" class="hidden">
+        <div id="q-card-box" class="q-card">
+            <div id="ghost-avatar-container" class="ghost-img-container">
+                <img id="ghost-avatar" src="pokey-full.png" alt="Ghost Character" class="ghost-img" onerror="this.style.display='none';">
+            </div>
+
+            <div id="q-badge" class="q-badge">SENANG</div>
+            <div class="q-title">⚡ HANTU DITANGKAP! JAWAB SOALAN ⚡</div>
+            <div class="q-sequence" id="q-text">2, 4, 6, [ ? ], 10</div>
+            
+            <div class="hint-container">
+                <button type="button" id="btn-hint-el" class="btn-hint" onclick="toggleHint()"><i class="fas fa-lightbulb"></i> PETUNJUK ( -1 MATA )</button>
+                <div id="hint-text-box" class="hint-box hidden"></div>
+            </div>
+
+            <div class="q-options" id="q-options"></div>
+        </div>
+    </div>
+
+    <!-- 4. FEEDBACK OVERLAY -->
+    <div id="feedback-overlay" class="hidden">
+        <div id="fb-bomb" class="hidden" style="text-align:center;">
+            <div style="font-size: 7rem;">💣💥</div>
+            <div style="font-family: 'Fredoka One', cursive; font-size: 2.3rem; color: #ff1744; text-shadow: 0 0 15px rgba(255,23,68,0.8);">SALAH! HANTU BERTAMBAH!</div>
+        </div>
+        <div id="fb-clap" class="hidden" style="text-align:center;">
+            <div style="font-size: 7rem;" class="animate-pop">👏✨</div>
+            <div id="clap-text" style="font-family: 'Fredoka One', cursive; font-size: 2.3rem; color: #00e676; text-shadow: 0 0 15px rgba(0,230,118,0.8);">BETUL! TEPAT SEKALI!</div>
+        </div>
+        <div id="fb-ammo-out" class="hidden" style="text-align:center;">
+            <div style="font-size: 7rem;" class="animate-pop">🔫🚫</div>
+            <div style="font-family: 'Fredoka One', cursive; font-size: 2.3rem; color: #ffeb3b; text-shadow: 0 0 15px rgba(255,235,59,0.8);">TEMBAKAN HABIS! PERMAINAN TAMAT!</div>
+        </div>
+    </div>
+
+    <!-- 5. KEPUTUSAN PERMAINAN -->
+    <div id="cert-screen" class="screen hidden">
+        <div class="cert-card">
+            <div style="border-radius: 12px; overflow: hidden; margin-bottom: 12px; border: 2px solid #b38728;">
+                <img src="mm.jpg" alt="Matematik Bersama Cikgu Wi" style="width:100%; height:auto; display:block;" onerror="this.onerror=null; this.src='https://placehold.co/1000x300/ffcc80/3e2723?text=Matematik+Bersama+Cikgu+Wi';">
+            </div>
+
+            <h2>KEPUTUSAN PERMAINAN</h2>
+            <h3>PEMBURU HANTU URUTAN NOMBOR</h3>
+            <p id="cert-end-reason" style="font-weight:700; color:#555; margin-bottom:5px;">Tahniah disematkan kepada:</p>
+            <div class="cert-name" id="c-name">NAMA MURID</div>
+            <div class="cert-class" id="c-class">KELAS</div>
+            <p>Skor akhir setelah ditolak baki hantu &amp; petunjuk:</p>
+            <div class="cert-score" id="c-score">0 MATA</div>
+            <div class="penalty-text" id="c-penalty"></div>
+
+            <div style="margin-top: 12px; background: rgba(0, 255, 204, 0.08); border: 2px dashed #00ffcc; border-radius: 14px; padding: 14px; text-align: center;">
+                <input type="hidden" id="google-webhook-url" value="https://script.google.com/macros/s/AKfycbyiqaerg1UNmRwNy4SCKzkNpRBXLb8LRbRrkAPTctH4mNxQtfvV8S-apLNna-QZYzd-Og/exec">
+                <button onclick="sendDataToGoogleSheets()" id="btn-submit-sheet" class="btn-sync">
+                    <i class="fas fa-cloud-upload-alt"></i> HANTAR MARKAH KE GOOGLE SHEETS
+                </button>
+                <div id="sync-status-msg" style="font-size:0.95rem; font-weight:800; margin-top:8px;"></div>
+            </div>
+
+            <div style="margin-top:16px;">
+                <button class="btn-restart" onclick="location.reload()">🔄 Main Semula</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const rawQuestions = [
+            // ARAS SENANG (Pokey) -> 5 MARKAH
+            { seq: "12, 18, 24, [ ? ], 36", options: ["28", "30", "32", "34"], ans: "30", hint: "💡 Pola nombor bertambah 6 (+6) pada setiap langkah.", level: "SENANG (+5 Mata)", points: 5, color: "#76ff03", ghostImg: "pokey-full.png", ghostName: "Pokey" },
+            { seq: "100, 92, 84, [ ? ], 68", options: ["74", "76", "78", "80"], ans: "76", hint: "💡 Pola nombor berkurang 8 (-8) pada setiap langkah.", level: "SENANG (+5 Mata)", points: 5, color: "#76ff03", ghostImg: "pokey-full.png", ghostName: "Pokey" },
+            { seq: "5, 15, 25, 35, [ ? ]", options: ["40", "45", "50", "55"], ans: "45", hint: "💡 Pola nombor bertambah 10 (+10) secara menaik.", level: "SENANG (+5 Mata)", points: 5, color: "#76ff03", ghostImg: "pokey-full.png", ghostName: "Pokey" },
+            { seq: "150, 200, 250, [ ? ], 350", options: ["280", "290", "300", "310"], ans: "300", hint: "💡 Pola nombor bertambah 50 (+50) secara menaik.", level: "SENANG (+5 Mata)", points: 5, color: "#76ff03", ghostImg: "pokey-full.png", ghostName: "Pokey" },
+            { seq: "80, 71, 62, [ ? ], 44", options: ["51", "53", "55", "57"], ans: "53", hint: "💡 Pola nombor menolak 9 (-9) bagi setiap sebutan.", level: "SENANG (+5 Mata)", points: 5, color: "#76ff03", ghostImg: "pokey-full.png", ghostName: "Pokey" },
+
+            // ARAS SENANG (Slimer) -> 5 MARKAH
+            { seq: "14, 21, 28, [ ? ], 42", options: ["33", "35", "37", "39"], ans: "35", hint: "💡 Ini ialah sifir 7 atau pola bertambah 7 (+7).", level: "SENANG (+5 Mata)", points: 5, color: "#76ff03", ghostImg: "slimer.png", ghostName: "Slimer" },
+            { seq: "500, 450, 400, [ ? ], 300", options: ["330", "340", "350", "360"], ans: "350", hint: "💡 Nombor berkurang sebanyak 50 (-50) pada setiap peringkat.", level: "SENANG (+5 Mata)", points: 5, color: "#76ff03", ghostImg: "slimer.png", ghostName: "Slimer" },
+            { seq: "16, 24, 32, [ ? ], 48", options: ["38", "40", "42", "44"], ans: "40", hint: "💡 Ini ialah sifir 8 atau bertambah 8 (+8).", level: "SENANG (+5 Mata)", points: 5, color: "#76ff03", ghostImg: "slimer.png", ghostName: "Slimer" },
+            { seq: "1000, 2000, 3000, [ ? ], 5000", options: ["3500", "4000", "4500", "4800"], ans: "4000", hint: "💡 Pola bertambah seribu (+1000) bagi setiap langkah.", level: "SENANG (+5 Mata)", points: 5, color: "#76ff03", ghostImg: "slimer.png", ghostName: "Slimer" },
+            { seq: "81, 72, 63, [ ? ], 45", options: ["52", "54", "56", "58"], ans: "54", hint: "💡 Ini ialah sifir 9 secara menurun (-9).", level: "SENANG (+5 Mata)", points: 5, color: "#76ff03", ghostImg: "slimer.png", ghostName: "Slimer" },
+
+            // ARAS SEDERHANA (Winky) -> 10 MARKAH
+            { seq: "3, 6, 12, 24, [ ? ]", options: ["36", "40", "48", "52"], ans: "48", hint: "💡 Nombor didarab dengan 2 (×2) pada setiap langkah.", level: "SEDERHANA (+10 Mata)", points: 10, color: "#e040fb", ghostImg: "winky.png", ghostName: "Winky" },
+            { seq: "162, 54, 18, [ ? ], 2", options: ["4", "6", "8", "9"], ans: "6", hint: "💡 Nombor dibahagi dengan 3 (÷3) pada setiap langkah.", level: "SEDERHANA (+10 Mata)", points: 10, color: "#e040fb", ghostImg: "winky.png", ghostName: "Winky" },
+            { seq: "2, 5, 10, 17, [ ? ]", options: ["22", "24", "26", "28"], ans: "26", hint: "💡 Perbezaan nombor bertambah secara ganjil: +3, +5, +7, (+9).", level: "SEDERHANA (+10 Mata)", points: 10, color: "#e040fb", ghostImg: "winky.png", ghostName: "Winky" },
+            { seq: "256, 128, 64, [ ? ], 16", options: ["24", "28", "32", "36"], ans: "32", hint: "💡 Setiap nombor dibahagi separuh (÷2).", level: "SEDERHANA (+10 Mata)", points: 10, color: "#e040fb", ghostImg: "winky.png", ghostName: "Winky" },
+            { seq: "1, 4, 12, 36, [ ? ]", options: ["72", "96", "108", "144"], ans: "108", hint: "💡 Selepas nombor pertama, setiap nombor didarab 3 (×3).", level: "SEDERHANA (+10 Mata)", points: 10, color: "#e040fb", ghostImg: "winky.png", ghostName: "Winky" },
+            { seq: "50, 48, 44, 38, [ ? ]", options: ["28", "30", "32", "34"], ans: "30", hint: "💡 Penolakan nombor genap bertambah: -2, -4, -6, (-8).", level: "SEDERHANA (+10 Mata)", points: 10, color: "#e040fb", ghostImg: "winky.png", ghostName: "Winky" },
+            { seq: "5, 15, 45, [ ? ], 405", options: ["90", "125", "135", "150"], ans: "135", hint: "💡 Setiap sebutan didarab 3 (×3).", level: "SEDERHANA (+10 Mata)", points: 10, color: "#e040fb", ghostImg: "winky.png", ghostName: "Winky" },
+            { seq: "10, 12, 16, 22, [ ? ]", options: ["28", "30", "32", "34"], ans: "30", hint: "💡 Pola bertambah secara berperingkat: +2, +4, +6, (+8).", level: "SEDERHANA (+10 Mata)", points: 10, color: "#e040fb", ghostImg: "winky.png", ghostName: "Winky" },
+
+            // ARAS TINGGI (Slimer) -> 20 MARKAH
+            { seq: "1, 4, 9, 16, [ ? ]", options: ["20", "23", "25", "30"], ans: "25", hint: "💡 Ini ialah siri Kuasa Dua Sempurna: 1², 2², 3², 4², (5²).", level: "TINGGI (+20 Mata)", points: 20, color: "#00e5ff", ghostImg: "slimer.png", ghostName: "Slimer" },
+            { seq: "1, 1, 2, 3, 5, [ ? ]", options: ["7", "8", "9", "10"], ans: "8", hint: "💡 Siri Fibonacci: Nombor seterusnya ialah jumlah 2 nombor sebelumnya (3 + 5).", level: "TINGGI (+20 Mata)", points: 20, color: "#00e5ff", ghostImg: "slimer.png", ghostName: "Slimer" },
+            { seq: "2, 3, 5, 8, 12, [ ? ]", options: ["15", "17", "18", "20"], ans: "17", hint: "💡 Pola pertambahan bertambah 1 pada setiap langkah: +1, +2, +3, +4, (+5).", level: "TINGGI (+20 Mata)", points: 20, color: "#00e5ff", ghostImg: "slimer.png", ghostName: "Slimer" },
+            { seq: "1, 8, 27, 64, [ ? ]", options: ["81", "100", "125", "144"], ans: "125", hint: "💡 Ini ialah siri Kuasa Tiga Sempurna: 1³, 2³, 3³, 4³, (5³).", level: "TINGGI (+20 Mata)", points: 20, color: "#00e5ff", ghostImg: "slimer.png", ghostName: "Slimer" },
+            { seq: "3, 5, 9, 17, [ ? ]", options: ["25", "31", "33", "35"], ans: "33", hint: "💡 Formula: (Darab 2 kemudian tolak 1) ➔ (17 × 2) - 1.", level: "TINGGI (+20 Mata)", points: 20, color: "#00e5ff", ghostImg: "slimer.png", ghostName: "Slimer" }
+        ];
+
+        const TOTAL_QUESTIONS = rawQuestions.length; // 23 Soalan = 23 Tembakan Sahaja
+        const MAX_SCORE = rawQuestions.reduce((acc, q) => acc + q.points, 0);
+
+        document.getElementById('welcome-ammo-count').innerText = TOTAL_QUESTIONS;
+
+        let pName = "";
+        let pClass = "";
+        let score = 0;
+        let shotsLeft = TOTAL_QUESTIONS;
+        let hintsUsedTotal = 0;
+        let activeQuestionIndex = -1;
+        let currentHitGhostIndex = -1;
+        let isHintUsed = false;
+        let gameStarted = false;
+        let isModalOpen = false;
+        let isGameOver = false;
+
+        const loadedImages = {};
+        const ghostImageSources = {
+            'pokey-full.png': 'pokey-full.png',
+            'slimer.png': 'slimer.png',
+            'winky.png': 'winky.png'
+        };
+
+        function preloadImages() {
+            for (let key in ghostImageSources) {
+                const img = new Image();
+                img.src = ghostImageSources[key];
+                img.onload = () => { loadedImages[key] = img; };
+                img.onerror = () => { loadedImages[key] = null; };
+            }
+        }
+        preloadImages();
+
+        // BACKGROUND STARS
+        const bgCanvas = document.getElementById('bg-canvas');
+        const bgCtx = bgCanvas.getContext('2d');
+        let stars = [];
+
+        function initStars() {
+            bgCanvas.width = window.innerWidth;
+            bgCanvas.height = window.innerHeight;
+            stars = [];
+            for (let i = 0; i < 80; i++) {
+                stars.push({
+                    x: Math.random() * bgCanvas.width,
+                    y: Math.random() * bgCanvas.height,
+                    r: Math.random() * 2 + 0.5,
+                    alpha: Math.random(),
+                    speed: Math.random() * 0.02 + 0.005
+                });
+            }
+        }
+        initStars();
+
+        function drawStars() {
+            bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+            bgCtx.fillStyle = "#0d0814";
+            bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+            stars.forEach(s => {
+                s.alpha += s.speed;
+                if (s.alpha > 1 || s.alpha < 0.1) s.speed *= -1;
+                bgCtx.fillStyle = `rgba(0, 255, 204, ${Math.abs(s.alpha)})`;
+                bgCtx.beginPath();
+                bgCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                bgCtx.fill();
+            });
+            requestAnimationFrame(drawStars);
+        }
+        drawStars();
+
+        // GAME CANVAS
+        const gameCanvas = document.getElementById('game-canvas');
+        const ctx = gameCanvas.getContext('2d');
+        let ghosts = [];
+        let laserBeams = [];
+
+        function resizeGameCanvas() {
+            gameCanvas.width = window.innerWidth;
+            gameCanvas.height = window.innerHeight;
+            initStars();
+        }
+        window.addEventListener('resize', resizeGameCanvas);
+        resizeGameCanvas();
+
+        class GhostObject {
+            constructor(qIndex) {
+                this.qIndex = qIndex;
+                this.qData = rawQuestions[qIndex];
+                this.radius = 45;
+                this.x = Math.random() * (gameCanvas.width - 140) + 70;
+                this.y = Math.random() * (gameCanvas.height - 220) + 90;
+                this.vx = (Math.random() - 0.5) * 3.2;
+                this.vy = (Math.random() - 0.5) * 3.2;
+                if (Math.abs(this.vx) < 1) this.vx = 1.5;
+                if (Math.abs(this.vy) < 1) this.vy = -1.5;
+                this.imgKey = this.qData.ghostImg;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                if (this.x < this.radius || this.x > gameCanvas.width - this.radius) this.vx *= -1;
+                if (this.y < 80 || this.y > gameCanvas.height - 100) this.vy *= -1;
+            }
+            draw() {
+                ctx.save();
+                ctx.shadowColor = this.qData.color;
+                ctx.shadowBlur = 18;
+
+                const img = loadedImages[this.imgKey];
+                if (img && img.complete && img.naturalWidth > 0) {
+                    ctx.drawImage(img, this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2);
+                } else {
+                    ctx.fillStyle = this.qData.color;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y - 10, this.radius - 5, Math.PI, 0, false);
+                    ctx.lineTo(this.x + this.radius - 5, this.y + 20);
+                    ctx.lineTo(this.x + (this.radius - 5) / 2, this.y + 10);
+                    ctx.lineTo(this.x, this.y + 20);
+                    ctx.lineTo(this.x - (this.radius - 5) / 2, this.y + 10);
+                    ctx.lineTo(this.x - (this.radius - 5), this.y + 20);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    ctx.fillStyle = "#ffffff";
+                    ctx.beginPath();
+                    ctx.arc(this.x - 12, this.y - 12, 8, 0, Math.PI * 2);
+                    ctx.arc(this.x + 12, this.y - 12, 8, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = "#000000";
+                    ctx.beginPath();
+                    ctx.arc(this.x - 10, this.y - 12, 4, 0, Math.PI * 2);
+                    ctx.arc(this.x + 14, this.y - 12, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = "#ffffff";
+                ctx.font = "bold 13px Quicksand";
+                ctx.textAlign = "center";
+                ctx.fillText(this.qData.ghostName, this.x, this.y + this.radius + 15);
+
+                ctx.restore();
+            }
+        }
+
+        function initGhosts() {
+            ghosts = [];
+            for (let i = 0; i < rawQuestions.length; i++) {
+                ghosts.push(new GhostObject(i));
+            }
+            updateHUD();
+        }
+
+        function updateHUD() {
+            document.getElementById('hud-ammo').innerText = `${shotsLeft} / ${TOTAL_QUESTIONS}`;
+            document.getElementById('hud-level').innerText = ghosts.length;
+            document.getElementById('hud-score').innerText = score;
+        }
+
+        // AUDIO CONTEXT
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+        function initAudio() { if (!audioCtx) audioCtx = new AudioContext(); }
+
+        function playZapSound() {
+            initAudio();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.15);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.15);
+        }
+
+        function playSuccessSound() {
+            initAudio();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
+            osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2);
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.4);
+        }
+
+        function playFailSound() {
+            initAudio();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.35);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.35);
+        }
+
+        // GAME LOOP
+        function gameLoop() {
+            ctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+
+            if (gameStarted && !isGameOver) {
+                ghosts.forEach(g => {
+                    if (!isModalOpen) g.update();
+                    g.draw();
+                });
+
+                for (let i = laserBeams.length - 1; i >= 0; i--) {
+                    const b = laserBeams[i];
+                    ctx.save();
+                    ctx.strokeStyle = b.hit ? "#00ffcc" : "#ff1744";
+                    ctx.lineWidth = 5;
+                    ctx.shadowColor = b.hit ? "#00ffcc" : "#ff1744";
+                    ctx.shadowBlur = 15;
+                    ctx.beginPath();
+                    ctx.moveTo(gameCanvas.width / 2, gameCanvas.height);
+                    ctx.lineTo(b.tx, b.ty);
+                    ctx.stroke();
+
+                    ctx.fillStyle = b.hit ? "#00ffcc" : "#ff1744";
+                    ctx.beginPath();
+                    ctx.arc(b.tx, b.ty, 10 * b.alpha, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+
+                    b.alpha -= 0.08;
+                    if (b.alpha <= 0) laserBeams.splice(i, 1);
+                }
+            }
+            requestAnimationFrame(gameLoop);
+        }
+        gameLoop();
+
+        // MULA PERMAINAN
+        function startGame(e) {
+            e.preventDefault();
+            pName = document.getElementById('p-name').value.trim();
+            pClass = document.getElementById('p-class').value.trim();
+            if (!pName || !pClass) return;
+
+            score = 0;
+            shotsLeft = TOTAL_QUESTIONS;
+            hintsUsedTotal = 0;
+            isGameOver = false;
+            gameStarted = true;
+
+            document.getElementById('hud-name').innerText = pName.toUpperCase();
+            document.getElementById('welcome-screen').classList.add('hidden');
+            document.getElementById('hud').classList.remove('hidden');
+
+            initGhosts();
+        }
+
+        // KAWALAN TEMBAKAN
+        gameCanvas.addEventListener('mousedown', (e) => {
+            if (!gameStarted || isModalOpen || isGameOver || shotsLeft <= 0) return;
+
+            const rect = gameCanvas.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+
+            // Tolak 1 peluru setiap kali tembakan dilepaskan
+            shotsLeft--;
+            updateHUD();
+            playZapSound();
+
+            let hitIndex = -1;
+            for (let i = ghosts.length - 1; i >= 0; i--) {
+                const g = ghosts[i];
+                const dist = Math.hypot(clickX - g.x, clickY - g.y);
+                if (dist <= g.radius + 10) {
+                    hitIndex = i;
+                    break;
+                }
+            }
+
+            laserBeams.push({ tx: clickX, ty: clickY, alpha: 1.0, hit: hitIndex !== -1 });
+
+            if (hitIndex !== -1) {
+                currentHitGhostIndex = hitIndex;
+                openQuestionModal(ghosts[hitIndex].qIndex);
+            } else {
+                // Tembakan tersasar & peluru ke-23 habis -> tamat permainan
+                if (shotsLeft <= 0) {
+                    triggerOutOfAmmoEnd();
+                }
+            }
+        });
+
+        // BUKA MODAL SOALAN
+        function openQuestionModal(qIndex) {
+            isModalOpen = true;
+            activeQuestionIndex = qIndex;
+            isHintUsed = false;
+
+            const q = rawQuestions[qIndex];
+            const badge = document.getElementById('q-badge');
+            badge.innerText = q.level;
+            badge.style.background = q.color;
+            badge.style.color = "#0d0814";
+
+            const avatarContainer = document.getElementById('ghost-avatar-container');
+            const avatarImg = document.getElementById('ghost-avatar');
+            avatarContainer.style.color = q.color;
+            avatarImg.style.display = 'block';
+            avatarImg.src = q.ghostImg;
+
+            document.getElementById('q-text').innerText = q.seq;
+
+            const hintBtn = document.getElementById('btn-hint-el');
+            const hintBox = document.getElementById('hint-text-box');
+            hintBtn.disabled = false;
+            hintBox.classList.add('hidden');
+            hintBox.innerText = q.hint;
+
+            const optContainer = document.getElementById('q-options');
+            optContainer.innerHTML = "";
+
+            const optColors = [
+                { bg: "rgba(255, 23, 68, 0.25)", border: "#ff1744", badge: "#ff1744" },
+                { bg: "rgba(0, 229, 255, 0.25)", border: "#00e5ff", badge: "#00e5ff" },
+                { bg: "rgba(255, 234, 0, 0.25)", border: "#ffea00", badge: "#ffea00" },
+                { bg: "rgba(118, 255, 3, 0.25)", border: "#76ff03", badge: "#76ff03" }
+            ];
+            const labels = ["A", "B", "C", "D"];
+
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "btn-opt";
+                btn.style.background = optColors[idx].bg;
+                btn.style.borderColor = optColors[idx].border;
+                btn.innerHTML = `<span class="opt-badge" style="background:${optColors[idx].badge}; color:#0d0814;">${labels[idx]}</span> <span>${opt}</span>`;
+                btn.onclick = () => checkAnswer(opt);
+                optContainer.appendChild(btn);
+            });
+
+            document.getElementById('modal-overlay').classList.remove('hidden');
+        }
+
+        function toggleHint() {
+            if (isHintUsed) return;
+            isHintUsed = true;
+            hintsUsedTotal++;
+            score = Math.max(0, score - 1);
+            updateHUD();
+
+            document.getElementById('btn-hint-el').disabled = true;
+            document.getElementById('hint-text-box').classList.remove('hidden');
+        }
+
+        function checkAnswer(selected) {
+            const q = rawQuestions[activeQuestionIndex];
+            const isCorrect = (selected === q.ans);
+
+            document.getElementById('modal-overlay').classList.add('hidden');
+            const fbOverlay = document.getElementById('feedback-overlay');
+            const fbClap = document.getElementById('fb-clap');
+            const fbBomb = document.getElementById('fb-bomb');
+            const fbAmmoOut = document.getElementById('fb-ammo-out');
+
+            fbClap.classList.add('hidden');
+            fbBomb.classList.add('hidden');
+            fbAmmoOut.classList.add('hidden');
+            fbOverlay.classList.remove('hidden');
+
+            if (isCorrect) {
+                playSuccessSound();
+                score += q.points;
+                ghosts.splice(currentHitGhostIndex, 1);
+                document.getElementById('clap-text').innerText = `BETUL! +${q.points} MARKAH!`;
+                fbClap.classList.remove('hidden');
+            } else {
+                playFailSound();
+                fbBomb.classList.remove('hidden');
+                document.body.classList.add('animate-shake');
+                setTimeout(() => document.body.classList.remove('animate-shake'), 500);
+
+                // Tambah 1 hantu baharu apabila jawapan salah
+                const randomQIndex = Math.floor(Math.random() * rawQuestions.length);
+                ghosts.push(new GhostObject(randomQIndex));
+            }
+
+            updateHUD();
+
+            setTimeout(() => {
+                fbOverlay.classList.add('hidden');
+                isModalOpen = false;
+
+                // Tamat jika semua hantu dihapuskan ATAU 23 tembakan telah digunakan
+                if (ghosts.length === 0 || shotsLeft <= 0) {
+                    endGame();
+                }
+            }, 1300);
+        }
+
+        function triggerOutOfAmmoEnd() {
+            isGameOver = true;
+            playFailSound();
+            const fbOverlay = document.getElementById('feedback-overlay');
+            document.getElementById('fb-clap').classList.add('hidden');
+            document.getElementById('fb-bomb').classList.add('hidden');
+            document.getElementById('fb-ammo-out').classList.remove('hidden');
+            fbOverlay.classList.remove('hidden');
+
+            setTimeout(() => {
+                fbOverlay.classList.add('hidden');
+                endGame();
+            }, 1500);
+        }
+
+        function endGame() {
+            isGameOver = true;
+            isModalOpen = false;
+
+            document.getElementById('hud').classList.add('hidden');
+            document.getElementById('modal-overlay').classList.add('hidden');
+            document.getElementById('cert-screen').classList.remove('hidden');
+
+            // Tolak 1 mata bagi setiap baki hantu yang tinggal
+            const remainingGhostsPenalty = ghosts.length;
+            const rawScoreBeforeGhostPenalty = score;
+            score = Math.max(0, score - remainingGhostsPenalty);
+
+            document.getElementById('c-name').innerText = pName.toUpperCase();
+            document.getElementById('c-class').innerText = `KELAS: ${pClass.toUpperCase()}`;
+            document.getElementById('c-score').innerText = `${score} / ${MAX_SCORE} MATA`;
+
+            const reasonEl = document.getElementById('cert-end-reason');
+            if (remainingGhostsPenalty === 0) {
+                reasonEl.innerText = "Tahniah! Semua hantu berjaya dihapuskan! Sijil ini dianugerahkan kepada:";
+            } else {
+                reasonEl.innerText = `Semua ${TOTAL_QUESTIONS} tembakan telah digunakan. Tahniah atas usaha gigih:`;
+            }
+
+            // Papar pecahan tolakan markah (petunjuk + baki hantu)
+            const penaltyEl = document.getElementById('c-penalty');
+            let penaltyDetails = [];
+
+            if (hintsUsedTotal > 0) {
+                penaltyDetails.push(`-${hintsUsedTotal} mata (${hintsUsedTotal} petunjuk)`);
+            }
+            if (remainingGhostsPenalty > 0) {
+                penaltyDetails.push(`-${remainingGhostsPenalty} mata (${remainingGhostsPenalty} baki hantu)`);
+            }
+
+            if (penaltyDetails.length > 0) {
+                penaltyEl.style.color = "#d32f2f";
+                penaltyEl.innerHTML = `Markah Asal: ${rawScoreBeforeGhostPenalty} | Tolakan: ${penaltyDetails.join(' &amp; ')}`;
+            } else {
+                penaltyEl.style.color = "#2e7d32";
+                penaltyEl.innerText = "✨ Sempurna! Tiada petunjuk digunakan & semua hantu dihapuskan!";
+            }
+
+            if (typeof confetti === 'function') {
+                confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+            }
+        }
+
+        function sendDataToGoogleSheets() {
+            const webhookUrl = document.getElementById('google-webhook-url').value;
+            const btn = document.getElementById('btn-submit-sheet');
+            const statusMsg = document.getElementById('sync-status-msg');
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> MENGHANTAR...';
+            statusMsg.innerText = "";
+
+            const payload = {
+                nama: pName.toUpperCase(),
+                kelas: pClass.toUpperCase(),
+                markah: score,
+                markahPenuh: MAX_SCORE,
+                petunjukDigunakan: hintsUsedTotal,
+                bakiHantu: ghosts.length,
+                tolakanHantu: ghosts.length,
+                tarikh: new Date().toLocaleString('ms-MY')
+            };
+
+            fetch(webhookUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(() => {
+                btn.innerHTML = '<i class="fas fa-check-circle"></i> BERJAYA DIHANTAR!';
+                btn.style.background = "#2e7d32";
+                statusMsg.style.color = "#2e7d32";
+                statusMsg.innerText = "Rekod markah akhir anda telah disimpan ke Google Sheets cikgu!";
+            })
+            .catch(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-redo"></i> CUBA HANTAR SEMULA';
+                statusMsg.style.color = "#d32f2f";
+                statusMsg.innerText = "Ralat sambungan. Sila semak internet anda dan cuba lagi.";
+            });
+        }
+    </script>
+</body>
+</html>
